@@ -7,46 +7,103 @@ if (isset($_SESSION['login']) === TRUE) {
 }
 $msg = "";
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
 
+//Load Composer's autoloader
+require 'vendor/autoload.php';
+$phpmailer =  new PHPMailer();
 
 
 if (isset($_POST['signin'])) {
     $user = $_POST['username'];
-    echo $user;
-    $pass = bin2hex($_POST['password']);
-    echo $pass;
+    // echo $user;
+    $pass = $_POST['password'];
+    // echo $pass;
     if (!empty($user)) {
         $sql = "SELECT username from users where username='$user' ";
         $result = mysqli_query($conn, $sql) or trigger_error("not execute");
         $rowCount = mysqli_num_rows($result);
-        if ($rowCount > 0) {
+        if ($rowCount) {
 
-            $sql = "SELECT password from users where username='$user' and password='$pass'";
-            echo $sql;
+            $sql = "SELECT password from users where username='$user'";
+            // echo $sql;
             $result = $conn->query($sql) or trigger_error("not execute");
-            $rowCount = mysqli_num_rows($result);
-
-            if ($rowCount > 0) {
+            // $results = mysqli_query($conn, $sql);
+            // print_r($result);
+            // die();
+            $row = $result->fetch_assoc();
+            // echo $row;
+            // print_r($row);
+            // echo '<pre>';
+            
+            // exit;
+            $passw = $rowCount['password'];
+            
+            if(!password_verify($pass,$passw)){
+                echo "<script type='text/javascript'>alert('password does not match');</script>";
+            }    else{
+                   
+                
+            
                 $sql = "SELECT status from users where username='$user' and status='1'";
                 $result = $conn->query($sql) or trigger_error("not execute");
                 $rowCount = mysqli_num_rows($result);
-                echo $sql;
-                if ($rowCount > 0) {
+                // echo $sql;
+                
+                if ($rowCount) {
                     $_SESSION['username'] = $user;
                     $_SESSION['login'] = TRUE;
                     header('location:dashshow.php');
                     //echo "<script>alert('user not found');</script>";
 
                 } else {
-                    $msg = "<script>alert('email not verified');</script>";
+                    // $msg = "<script>alert('email not verified');</script>";
                     $_SESSION['email'] = $user;
                     echo "<script>alert('email not verified');</script>";
-                    include 'emailverify.php';
+                    $phpmailer->isSMTP();
+                    $phpmailer->Host = 'smtp.mailtrap.io';
+                    $phpmailer->SMTPAuth = true;
+                    // $phpmailer->Por/$phpmailer->addAttachment('/home/acer/Downloads/index.jpeg');
+                    //$phpmailer->addAttachment('PHPMailer-master');t = 587;
+                    $phpmailer->Username = '4a60d0b7322906';
+                    $phpmailer->Password = 'd7b839b3e074ce';
+                    //$email = 'parvezkhan12799@gmail.com';
+                    $phpmailer->setFrom('parvexkhan88@gmail.com','parvez khan');
+                    $phpmailer->AddAddress($user);  // Add a recipient
+                    $phpmailer->IsHTML(true);
+                    $otp = substr(str_shuffle("0123456789"), 0, 6);
+                    $phpmailer->Subject = 'verify otp for singup';
+                    $phpmailer->WordWrap = 50;
+                    //print_r($otp);
+                    
+                    // $otp = $_SESSION['otp'];
+                    $phpmailer->Body = "This is your otp <b>$otp</b>";
+                    $phpmailer->AltBody = 'This is the body in plain text for non-HTML$phpmailer clients';
+                    
+    
+                    if (!$phpmailer->Send()) {
+                        echo 'Message could not be sent.';
+                        echo 'Mailer Error: ' . $phpmailer->ErrorInfo;
+                        // exit;
+                    }
+                    $sql = "SELECT id from users where username='$user' limit 1";
+                    $q = mysqli_query($conn, $sql);
+                    $ids = mysqli_fetch_assoc($q); 
+                    $id = $ids['id'];
+                    // echo $id;
+                    // exit;
+                    $sql = "INSERT into otps(otp,user_id) values('$otp','$id')";
+                    mysqli_query($conn, $sql);
+                    header('location:otpverify.php');
                     //   echo $msg;
                 }
-            } else {
-                echo "<script type='text/javascript'>alert('password does not match');</script>";
-            }
+               
+            }  
+            
+
+         
         } else {
             echo "user not found";
         }

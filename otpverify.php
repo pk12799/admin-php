@@ -1,12 +1,18 @@
 <?php
 session_start();
 include 'config.php';
-
+// unset($_SESSION['otp']);
 $email = $_SESSION['email'];
 if (isset($_POST['Verify'])) {
     $votp = $_POST['otp'];
+$sql  ="SELECT otp from otps left join users on users.id= otps.user_id order by otps.id desc limit 1 ";
+$q = mysqli_query($conn, $sql);
+// exit;
+$t = mysqli_fetch_assoc($q);
+echo $sql;
 
-    if ($votp === $_SESSION['otp']) {
+    if ($votp === $t['otp']) {
+        
         $sql = "UPDATE users set status='1' where username='$email'";
         if ($conn->query($sql)) {
             $msg = "<script>alert('now you can login);</script>";

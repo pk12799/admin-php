@@ -31,26 +31,28 @@ if (isset($_POST['Singup'])) {
         } else {
             if ($pass === $cpass) {
                 //email start
-                $_SESSION['email'] = $email;
+                
                 //echo $email;
                 $phpmailer->isSMTP();
                 $phpmailer->Host = 'smtp.mailtrap.io';
                 $phpmailer->SMTPAuth = true;
-                $phpmailer->Port = 587;
+                // $phpmailer->Por/$phpmailer->addAttachment('/home/acer/Downloads/index.jpeg');
+                //$phpmailer->addAttachment('PHPMailer-master');t = 587;
                 $phpmailer->Username = '4a60d0b7322906';
                 $phpmailer->Password = 'd7b839b3e074ce';
                 //$email = 'parvezkhan12799@gmail.com';
-                $phpmailer->setFrom('parvexkhan88@gmail.com');
+                $phpmailer->setFrom('parvexkhan88@gmail.com','parvez khan');
                 $phpmailer->AddAddress($email);  // Add a recipient
                 $phpmailer->IsHTML(true);
-                $_SESSION['otp'] = substr(str_shuffle("0123456789"), 0, 5);
+                $otp = substr(str_shuffle("0123456789"), 0, 6);
                 $phpmailer->Subject = 'verify otp for singup';
                 $phpmailer->WordWrap = 50;
-                $otp = $_SESSION['otp'];
+                //print_r($otp);
+                
+                // $otp = $_SESSION['otp'];
                 $phpmailer->Body = "This is your otp <b>$otp</b>";
                 $phpmailer->AltBody = 'This is the body in plain text for non-HTML$phpmailer clients';
-                //$phpmailer->addAttachment('/home/acer/Downloads/index.jpeg');
-                //$phpmailer->addAttachment('PHPMailer-master');
+                
 
                 if (!$phpmailer->Send()) {
                     echo 'Message could not be sent.';
@@ -61,11 +63,16 @@ if (isset($_POST['Singup'])) {
 
                 //email end
                 //            if(){
-                $pass = bin2hex($pass);
+                $pass = password_hash($pass,PASSWORD_DEFAULT);
                 $sql = "INSERT into users(fname, username,password) values('$name','$email','$pass')";
                 $q = mysqli_query($conn, $sql);
+                $id = $conn->insert_id;
+                $sql = "INSERT into otps(otp,user_id) values('$otp','$id')";
+                echo $sql;
+                $_SESSION['email']= $email;
+                $q = mysqli_query($conn, $sql);
                 if ($q) {
-                    echo "<script>alert('user registered successfully, try signin');</script>";
+                    //echo "<script>alert('user registered successfully, try signin');</script>";
                     header('location:otpverify.php');
                 }
             }
@@ -101,7 +108,7 @@ if (isset($_POST['Singup'])) {
 <body class="hold-transition register-page">
     <div class="register-box">
         <div class="register-logo">
-            <a href="../../index2.html"><b>Admin</b>LTE</a>
+            <a href="#"><b>Admin</b>LTE</a>
         </div>
 
         <div class="card">
